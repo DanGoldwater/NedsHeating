@@ -1,22 +1,6 @@
 from weather import *
 import numpy as np
-
-Windows_U_Uninsulated = 3.4
-Windows_U_Insulated = 1.1
-Floor_U_Interior = 0
-Floor_U_Insulated = 0.6
-Wall_U_Insulated = 0.6
-Wall_U_Uninsulated = 2.2
-Roof_U_Insulated = 0.6
-VentBathroom = 200
-VentKitchen = 1
-Floor_U_Flat = 0.21
-SkyLights_U = 3
-Window_U_Flat = 1.6
-Ceiling_U_Flat_Main = 0.14
-Ceiling_U_Flat_Bathroom = 0.25
-Wall_U_Flat_Main = 0.29
-Wall_U_Flat_Bathroom = 0.3
+from U_values import *
 
 
 class room(object):
@@ -28,16 +12,17 @@ class room(object):
         windows_area,
         windows_U,
         floor_u,
-        ext_proportion,
-        walls_u,
         vent=0,
         ceiling=0,
         doors_area=0,
         skylight=0,
         ceiling_u=0,
         roof_u=0,
+        chimney=0,
         ext_list=[],
         name="",
+        ach=ACH_House,
+        roof_proportion=1
     ):
         self.wall1 = wall1
         self.wall2 = wall2
@@ -45,8 +30,6 @@ class room(object):
         self.windows_area = windows_area
         self.windows_U = windows_U
         self.floor_U = floor_u
-        self.walls_u = walls_u
-        self.ext_proportion = ext_proportion
         self.vent = vent
         self.ceiling = ceiling
         self.ceiling_u = ceiling_u
@@ -55,31 +38,55 @@ class room(object):
         self.roof_u = roof_u
         self.ext_list = ext_list
         self.name = name
+        self.chimney = chimney
+        self.ach=ach
+        self.roof_proportion = roof_proportion
+        
 
-    def ext_wall_area(self):
-        area = 0
-        if len(self.ext_list) == 0:
-            return 0
+    def floor_area(self):
+        return self.wall1['length'] * self.wall2['length']
+        
 
-        for wall in self.ext_list:
-            area += getattr(self, wall) * self.height
-        return area
-        # return (self.wall1 + self.wall2) * (self.height * 2 * self.ext_proportion)
-
+    def volume(self):
+        return self.floor_area() * self.height 
+    
+    
     def wall_heat(self):
-        return self.ext_wall_area() * self.walls_u
+        loss = 0
+        for wall in self.ext_list:
+            wall_dict = getattr(self, wall)
+            loss += self.height * wall_dict['length'] * wall_dict['U']
+        loss += (self.windows_area + self.doors_area) * self.windows_U
+        return loss
+        
+    
+    def air_heat(self):
+        return (self.volume() * self.ach / 3) + self.chimney + self.vent
+    
+    def floor_heat(self):
+        return self.floor_area() * self.floor_U 
+    
+    def roof_heat(self):
+        return self.floor_area() * self.roof_u * self.roof_proportion + (self.skylight * SkyLights_U)
+    
 
     def total_heat(self):
         total_heat = (
-            self.wall_heat()
-            + (self.skylight * SkyLights_U)
-            + ((self.windows_area + self.doors_area) * self.windows_U)
-            + ((self.wall1 * self.wall2) * self.ceiling_u)
-            + ((self.wall1 * self.wall2) * self.floor_U)
-            + (self.roof_u * (self.wall1 * self.wall2))
-            + self.vent
+            self.wall_heat() +
+            self.floor_heat() +
+            self.roof_heat() +
+            self.air_heat()
         )
         return total_heat
+    
+    def print_details(self):
+        print(f'Room: {self.name}')
+        print(f'Exterior wall area of {self.ext_wall_area():.2f}')
+        print(f'Heat lost through walls {self.wall_heat():.2f}')
+        print(f'Heat lost through roof {self.roof_heat():.2f}')
+        print(f'Heat lost through floor {self.floor_heat():.2f}')
+        print(f'Heat lost through air change {self.air_heat():.2f}')
+        print(f'Total heat lost {self.total_heat():.2f}\n\n')
 
     def print_heat_needs(self):
         need = self.total_heat()
@@ -95,102 +102,117 @@ def heat_for_roomlist(room_list):
 
 DanArgs = {
     "name": "Dan",
-    "wall1": 4.5,
-    "wall2": 4.5,
-    "height": 2.7,
+    "wall1" : {'length': 4.9,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 4.6,
+               'U': Wall_U_Uninsulated},
+    "height": 3.1,
     "windows_area": 5,
     "windows_U": Windows_U_Uninsulated,
-    "walls_u": Wall_U_Uninsulated,
     "floor_u": Floor_U_Insulated,
-    "ext_proportion": 1 / 2,
     "vent": 0,
     "ext_list": ["wall1", "wall2"],
+    "chimney": Chimney_value,
+    "roof_u" : Roof_U_Interior
 }
 
 
 LivingRoomArgs = {
     "name": "House Living Room",
-    "wall1": 4.5,
-    "wall2": 4.5,
-    "height": 2.7,
+    "wall1" : {'length': 4.8,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 4.5,
+               'U': Wall_U_Uninsulated},
+    "height": 3.1,
     "windows_area": 4,
     "windows_U": Windows_U_Uninsulated,
-    "walls_u": Wall_U_Uninsulated,
     "floor_u": Floor_U_Insulated,
-    "ext_proportion": 1 / 2,
     "vent": 0,
     "ext_list": ["wall1", "wall2"],
+    "roof_u" : Roof_U_Interior,
+    "chimney": Chimney_value
 }
 
 JenArgs = {
     "name": "Jen",
-    "wall1": 4.5,
-    "wall2": 4.5,
-    "height": 2.7,
+    "wall1" : {'length': 4.7,
+               'U': Wall_U_Insulated_1},
+    "wall2" : {'length': 4.8,
+               'U': Wall_U_Insulated_1},
+    "height": 3.1,
     "windows_area": 5,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Insulated,
-    "ext_proportion": 1 / 2,
+    "roof_u" : Roof_U_Interior,
     "vent": 0,
     "ext_list": ["wall1", "wall2"],
 }
 
 BryonyArgs = {
     "name": "Bryony",
-    "wall1": 4,
-    "wall2": 4,
-    "height": 2.3,
+    "wall1" : {'length': 4.8,
+               'U': Wall_U_Insulated_1},
+    "wall2" : {'length': 4.8,
+               'U': Wall_U_Insulated_1},
+    "height": 2.85,
     "windows_area": 3,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "ext_proportion": 1 / 2,
     "vent": 0,
+    "roof_proportion": .7,
+    "roof_u": Roof_U_SLB,
     "ext_list": ["wall1"],
+    "chimney": Chimney_value
 }
 
 SophieArgs = {
     "name": "Sophie",
-    "wall1": 4,
-    "wall2": 4,
+    "wall1" : {'length': 4,
+               'U': Wall_U_Sophie_Plain_Wall},
+    "wall2" : {'length': 4,
+               'U': Wall_U_Sophie_Window_Wall},
     "height": 2.3,
     "windows_area": 3,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "ext_proportion": 1 / 2,
+    "roof_proportion": 2/5,
+    "roof_u": Roof_U_Insulated,
     "vent": 0,
     "ext_list": ["wall1", "wall2"],
+    'roof_proportion': .8,
+    'roof_u': Roof_U_Sophie
 }
 
 
 SarahLoydArgs = {
     "name": "Sarah Lloyd",
-    "wall1": 4,
-    "wall2": 4,
-    "height": 2.3,
+    "wall1" : {'length': 4.8,
+               'U': Wall_U_Insulated_1},
+    "wall2" : {'length': 4.5,
+               'U': Wall_U_Insulated_1},
+    "height": 2.85,
     "windows_area": 3,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "ext_proportion": 1 / 2,
+    "roof_proportion": .7,
+    "roof_u": Roof_U_SLB,
     "vent": 0,
     "ext_list": ["wall1"],
 }
 
 
 TimArgs = {
+
     "name": "Tim",
-    "wall1": 3.5,
-    "wall2": 3,
-    "height": 2,
+    "wall1" : {'length': 4.4,
+               'U': Wall_U_Topfloor_Void},
+    "wall2" : {'length': 3.6,
+               'U': Wall_U_Topfloor_end},
+    "height": 2.85,
     "windows_area": 1,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "roof_u": Roof_U_Insulated,
-    "ext_proportion": 3 / 2,
+    "roof_u": Roof_U_Tim_Nels,
     "vent": 0,
     "ext_list": ["wall1", "wall2", "wall1"],
 }
@@ -198,15 +220,15 @@ TimArgs = {
 
 NelsArgs = {
     "name": "Nels",
-    "wall1": 3.5,
-    "wall2": 3,
-    "height": 2,
+    "wall1" : {'length': 4.4,
+               'U': Wall_U_Topfloor_Void},
+    "wall2" : {'length': 3.6,
+               'U': Wall_U_Topfloor_end},
+    "height": 2.2,
     "windows_area": 1,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "roof_u": Roof_U_Insulated,
-    "ext_proportion": 3 / 2,
+    "roof_u": Roof_U_Tim_Nels,
     "vent": 0,
     "ext_list": ["wall1", "wall2", "wall1"],
 }
@@ -214,29 +236,31 @@ NelsArgs = {
 
 USKArgs = {
     "name": "Upstairs Kitchen",
-    "wall1": 3,
-    "wall2": 3,
-    "height": 2.7,
+    "wall1" : {'length': 3.2,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 4.0,
+               'U': Wall_U_Uninsulated},
+    "height": 2.85,
     "windows_area": 1,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "ext_proportion": 1 / 2,
     "vent": VentKitchen,
     "ext_list": ["wall1", "wall2"],
+    "roof_u" : Roof_U_Uninsulated,
+    'roof_proportion' : 1
 }
 
 
 DSKArgs = {
     "name": "Downstairs Kitchen",
-    "wall1": 3,
-    "wall2": 3,
-    "height": 2.7,
+    "wall1" : {'length': 4.2,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 3.1,
+               'U': Wall_U_Uninsulated},
+    "height": 3.1,
     "windows_area": 1,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Uninsulated,
-    "floor_u": Floor_U_Insulated,
-    "ext_proportion": 1 / 2,
+    "floor_u": Floor_U_Uninsulated,
     "vent": VentKitchen,
     "ext_list": ["wall1", "wall2"],
 }
@@ -244,60 +268,116 @@ DSKArgs = {
 
 DSHallArgs = {
     "name": "Downstairs Hall",
-    "wall1": 1.5,
-    "wall2": 10,
-    "height": 2,
+    "wall1" : {'length': 7.6,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 1.3,
+               'U': Wall_U_Uninsulated},
+    "height": 3.1,
     "windows_area": 0,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Insulated,
-    "ext_proportion": 1 / 5,
     "vent": 0,
-    "ext_list": ["wall1", "wall2"],
+    "ext_list": ["wall2", "wall2"],
+}
+
+
+DSHallLobbyArgs = {
+    "name": "Downstairs Lobby",
+    "wall1" : {'length': 2.3,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 2,
+               'U': Wall_U_Uninsulated},
+    "height": 2.5,
+    "windows_area": 0,
+    "windows_U": Windows_U_Insulated,
+    "floor_u": Floor_U_Insulated,
+    "vent": 0,
+    "ext_list": ["wall2", "wall2", "wall1"],
 }
 
 USHallArgs = {
     "name": "Upstairs Hall",
-    "wall1": 1.5,
-    "wall2": 10,
+    "wall1" : {'length': 2.1,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 9.8,
+               'U': Wall_U_Uninsulated},
     "height": 2,
     "windows_area": 2,
     "windows_U": Windows_U_Insulated,
-    "walls_u": Wall_U_Insulated,
     "floor_u": Floor_U_Interior,
-    "ext_proportion": 2 / 5,
+    "vent": 0,
+    "ext_list": ["wall1", "wall1"],
+}
+
+LandingToiletArgs = {
+    "name": "Landing Toilet",
+    "wall1" : {'length': 2.1,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 1.3,
+               'U': Wall_U_Uninsulated},
+    "height": 3.1,
+    "windows_area": 2,
+    "windows_U": Windows_U_Insulated,
+    "floor_u": Floor_U_Interior,
+    "roof_u": Roof_U_Insulated,
     "vent": 0,
     "ext_list": ["wall1", "wall1"],
 }
 
 DSBArgs = {
     "name": "Downstairs Bathroom",
-    "wall1": 1.5,
-    "wall2": 3,
-    "height": 2,
+    "wall1" : {'length': 4.1,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 1.5,
+               'U': Wall_U_Uninsulated},
+    "height": 3,
     "windows_area": 0.5,
     "windows_U": Windows_U_Uninsulated,
-    "walls_u": Wall_U_Uninsulated,
     "floor_u": Floor_U_Insulated,
-    "ext_proportion": 2 / 5,
     "vent": VentBathroom,
-    "ext_list": ["wall1"],
+    "ext_list": ["wall2"],
 }
 
 
 USBArgs = {
     "name": "Upstairs Bathroom",
-    "wall1": 1.5,
-    "wall2": 3,
-    "height": 2,
+    "wall1" : {'length': 4.3,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 1.5,
+               'U': Wall_U_Uninsulated},
+    "height": 3,
     "windows_area": 0.5,
     "windows_U": Windows_U_Uninsulated,
-    "walls_u": Wall_U_Uninsulated,
     "floor_u": Floor_U_Insulated,
-    "ext_proportion": 2 / 5,
     "vent": VentBathroom,
-    "ext_list": ["wall1"],
+    "ext_list": ["wall2"],
 }
+TopLanding_Plus_BroomArgs = {
+    "name": "Top Landing and Broom Cupboard",
+    "wall1" : {'length': 7,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 2.1,
+               'U': Wall_U_Uninsulated},
+    "height": 3,
+    "windows_area": 0.5,
+    "windows_U": Windows_U_Uninsulated,
+    "floor_u": Floor_U_Insulated,
+    "vent": VentBathroom,
+    "ext_list": ["wall2", "wall2"],
+    "roof_proportion" : 1,
+    "roof_u" : TopLanddingRoofU
+}
+
+
+
+
+
+
+
+#############################################################
+##### ARGUMENTS FOR FLAT ##################
+
+
 
 FlatMainRoomArgs = {
     "name": "Flat Main Room",
@@ -310,9 +390,9 @@ FlatMainRoomArgs = {
     "windows_U": Window_U_Flat,
     "walls_u": Wall_U_Flat_Main,
     "floor_u": Floor_U_Flat,
-    "ext_proportion": 4 / 5,
     "ext_list": ["wall2", "wall2"],
     "roof_u": Roof_U_Insulated,
+    "ach":ACH_Flat,
 }
 
 FlatLrgBdrmArgs = {
@@ -324,10 +404,10 @@ FlatLrgBdrmArgs = {
     "windows_U": Window_U_Flat,
     "walls_u": Wall_U_Flat_Main,
     "floor_u": Floor_U_Flat,
-    "ext_proportion": 4 / 5,
     "vent": VentBathroom,
     "roof_u": Roof_U_Insulated,
     "ext_list": ["wall1", "wall2"],
+    "ach":ACH_Flat,
 }
 
 FlatSmlBdrmArgs = {
@@ -339,10 +419,10 @@ FlatSmlBdrmArgs = {
     "windows_U": Window_U_Flat,
     "walls_u": Wall_U_Flat_Main,
     "floor_u": Floor_U_Flat,
-    "ext_proportion": 4 / 5,
     "vent": VentBathroom,
     "ext_list": ["wall2", "wall2", "wall1"],
     "roof_u": Roof_U_Insulated,
+    "ach":ACH_Flat,
 }
 
 FlatBthrmArgs = {
@@ -355,12 +435,11 @@ FlatBthrmArgs = {
     "windows_U": Window_U_Flat,
     "walls_u": Wall_U_Flat_Bathroom,
     "floor_u": Floor_U_Flat,
-    "ext_proportion": 4 / 5,
     "vent": VentBathroom,
     "roof_u": Roof_U_Insulated,
     "ext_list": ["wall1", "wall2"],
+    "ach":ACH_Flat,
 }
-
 Dan = room(**DanArgs)
 Jen = room(**JenArgs)
 Bryony = room(**BryonyArgs)
@@ -374,13 +453,8 @@ LivingRoom = room(**LivingRoomArgs)
 DSHall = room(**DSHallArgs)
 USHAll = room(**USHallArgs)
 DSB = room(**DSBArgs)
-FlatMainRoom = room(**FlatMainRoomArgs)
-FlatBthrm = room(**FlatBthrmArgs)
-FlatSmlBdrm = room(**FlatSmlBdrmArgs)
-FlatLRGBdrm = room(**FlatLrgBdrmArgs)
-
-
-FlatList = [FlatLRGBdrm, FlatBthrm, FlatMainRoom, FlatSmlBdrm]
+LandingToilet = room(**LandingToiletArgs)
+DSHallLobby = room(**DSHallLobbyArgs)
 HouseList = [
     Dan,
     Jen,
@@ -395,11 +469,69 @@ HouseList = [
     DSHall,
     USHAll,
     DSB,
+    LandingToilet,
+    DSHallLobby
 ]
-TotalList = FlatList + HouseList
 
-HouseHeat = heat_for_roomlist(HouseList)
-FlatHeat = heat_for_roomlist(FlatList)
+def finished_args(list_of_args):
+    finished_args_list = []
+    for args in list_of_args:
+        args_finished = args.copy()
+        if 'roof_u' in args_finished.keys():
+            if args_finished['roof_u'] > Roof_U_Tim_Nels:
+                args_finished['roof_u'] = Roof_U_Tim_Nels
+        if 'windows_u' in args_finished.keys():
+            if args_finished['windows_u'] > Windows_U_Insulated:
+                args_finished['roof_u'] = Windows_U_Insulated
+        if 'chimney' in args_finished.keys():
+            args_finished['chimney'] = 0
+        if args_finished['floor_u'] > Floor_U_Insulated:
+            args_finished['floor_u'] = Floor_U_Insulated
+        if args_finished['wall1']['U'] > Wall_U_Insulated_1:
+            args_finished['wall1']['U'] = Wall_U_Insulated_1
+        if args_finished['wall2']['U'] > Wall_U_Insulated_1:
+            args_finished['wall2']['U'] = Wall_U_Insulated_1
+        args_finished['ach'] = ACH_DraughtProof
+        finished_args_list += [args_finished]
+    return finished_args_list
+
+
+Dan_Finished = room(**DanArgs)
+Jen_Finished = room(**JenArgs)
+Bryony_Finished = room(**BryonyArgs)
+Sophie_Finished = room(**SophieArgs)
+SarahL_Finished = room(**SarahLoydArgs)
+Tim_Finished = room(**TimArgs)
+Nels_Finished = room(**NelsArgs)
+DSK_Finished = room(**DSKArgs)
+USK_Finished = room(**USKArgs)
+LivingRoom_Finished = room(**LivingRoomArgs)
+DSHall_Finished = room(**DSHallArgs)
+USHAll_Finished = room(**USHallArgs)
+DSB_Finished = room(**DSBArgs)
+LandingToilet_Finished = room(**LandingToiletArgs)
+DSHallLobby_Finished = room(**DSHallLobbyArgs)
+
+house_args_list = [DanArgs, JenArgs, BryonyArgs, SophieArgs, SarahLoydArgs, TimArgs, NelsArgs, DSKArgs, USKArgs, LivingRoomArgs, DSHallArgs, USHallArgs, DSBArgs, LandingToiletArgs, DSHallLobbyArgs]
+HouseHeat = sum([h.total_heat() for h in HouseList])
+
+Finished_House_Args = finished_args(house_args_list)
+Finished_House_List = [room(**a) for a in Finished_House_Args]
+HouseHeatFinished = sum([h.total_heat() for h in Finished_House_List])
+
+
+
+# FlatMainRoom = room(**FlatMainRoomArgs)
+# FlatBthrm = room(**FlatBthrmArgs)
+# FlatSmlBdrm = room(**FlatSmlBdrmArgs)
+# FlatLRGBdrm = room(**FlatLrgBdrmArgs)
+
+
+# FlatList = [FlatLRGBdrm, FlatBthrm, FlatMainRoom, FlatSmlBdrm]
+
+# TotalList = FlatList + HouseList
+
+# FlatHeat = heat_for_roomlist(FlatList)
 
 Desired_Temp = 18
 Threshold_Temp = 18

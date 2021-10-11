@@ -178,11 +178,11 @@ scenario_current = scenario(
 
 scenario_proposed = scenario(
     **{
-        "base_rent": 61,
+        "base_rent": 63,
         "income_threshold": 14200,
         "savings_threshold": 14200,
         "bills": 0,
-        "cap_ratio": 2,
+        "cap_ratio": 1.8,
         "rent_rule": rent_formula_new,
         "bills_rule": bills_formula_new,
         "a": .8,
