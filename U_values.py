@@ -28,5 +28,5 @@ Wall_U_Flat_Main = 0.29
 Wall_U_Flat_Bathroom = 0.3
 ACH_House = 3.0
 ACH_DraughtProof = 2.0
-ACH_Flat = 1
+ACH_Flat = 1.5
 Chimney_value = 20

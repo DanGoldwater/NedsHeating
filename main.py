@@ -1,6 +1,7 @@
 from weather import *
 import numpy as np
 from U_values import *
+import copy
 
 
 class room(object):
@@ -98,6 +99,14 @@ def heat_for_roomlist(room_list):
     for r in room_list:
         tot += r.total_heat()
     return tot
+
+def print_report(room_list):
+    tot_heat = heat_for_roomlist(room_list)
+    print(f'A total of {tot_heat:.2f} J / (K*s) for the house.\n')
+    print(f'So, when it\'s 0 C outside, and we want it to be 18C inside, currently we would be looking total heating need of {18 * tot_heat:.2f} W  \n')
+    print(f'Room by room this breaks down as:\n\n')
+    [h.print_heat_needs() for h in room_list]
+    print('')
 
 
 DanArgs = {
@@ -377,63 +386,84 @@ TopLanding_Plus_BroomArgs = {
 #############################################################
 ##### ARGUMENTS FOR FLAT ##################
 
+TopLanding_Plus_BroomArgs = {
+    "name": "Top Landing and Broom Cupboard",
+    "wall1" : {'length': 7,
+               'U': Wall_U_Uninsulated},
+    "wall2" : {'length': 2.1,
+               'U': Wall_U_Uninsulated},
+    "height": 3,
+    "windows_area": 0.5,
+    "windows_U": Windows_U_Uninsulated,
+    "floor_u": Floor_U_Insulated,
+    "vent": VentBathroom,
+    "ext_list": ["wall2", "wall2"],
+    "roof_proportion" : 1,
+    "roof_u" : TopLanddingRoofU
+}
 
 
 FlatMainRoomArgs = {
     "name": "Flat Main Room",
-    "wall1": 4.95,
-    "wall2": 7.3,
+    "wall1" : {'length': 7.3,
+               'U': Wall_U_Flat_Main},
+    "wall2" : {'length': 4.95,
+               'U': Wall_U_Flat_Main},
     "height": 2.4,
     "windows_area": 0.5,
     "doors_area": 1 * 2.2 + 0.76 * 2.01,
     "skylight": 3 * 0.4 * 0.9,
     "windows_U": Window_U_Flat,
-    "walls_u": Wall_U_Flat_Main,
     "floor_u": Floor_U_Flat,
-    "ext_list": ["wall2", "wall2"],
+    "ext_list": ["wall1", "wall1", "wall2"],
     "roof_u": Roof_U_Insulated,
+    "roof_proportion" : 1,
     "ach":ACH_Flat,
 }
 
 FlatLrgBdrmArgs = {
     "name": "Flat Large Bedroom",
-    "wall1": 2.9,
-    "wall2": 3.2,
+    "wall1" : {'length': 2.9,
+               'U': Wall_U_Flat_Main},
+    "wall2" : {'length': 3.2,
+               'U': Wall_U_Flat_Main},
+    "roof_proportion" : 1,
     "height": 2.4,
     "windows_area": 1.04 * 1.42,
     "windows_U": Window_U_Flat,
-    "walls_u": Wall_U_Flat_Main,
     "floor_u": Floor_U_Flat,
-    "vent": VentBathroom,
     "roof_u": Roof_U_Insulated,
-    "ext_list": ["wall1", "wall2"],
+    "ext_list": ["wall1", "wall1", "wall2"],
     "ach":ACH_Flat,
 }
 
 FlatSmlBdrmArgs = {
     "name": "Flat Small Bedroom",
-    "wall1": 2.05,
-    "wall2": 3.2,
+    "wall1" : {'length': 2.05,
+               'U': Wall_U_Flat_Main},
+    "wall2" : {'length': 3.2,
+               'U': Wall_U_Flat_Main},
+    "roof_proportion" : 1,
     "height": 2.4,
     "windows_area": 0.47 * 1.16,
     "windows_U": Window_U_Flat,
-    "walls_u": Wall_U_Flat_Main,
     "floor_u": Floor_U_Flat,
-    "vent": VentBathroom,
-    "ext_list": ["wall2", "wall2", "wall1"],
+    "ext_list": ["wall2", "wall1"],
     "roof_u": Roof_U_Insulated,
     "ach":ACH_Flat,
 }
 
 FlatBthrmArgs = {
     "name": "Flat Bathroom",
-    "wall1": 2.55,
-    "wall2": 1.7,
+    "wall1" : {'length': 2.55,
+               'U': Wall_U_Flat_Main},
+    "wall2" : {'length': 1.7,
+               'U': Wall_U_Flat_Main},
+    "roof_proportion" : 1,
     "height": 2.2,
     "windows_area": 0.68 * 0.9,
     "skylight": 0.38 * 0.76,
     "windows_U": Window_U_Flat,
-    "walls_u": Wall_U_Flat_Bathroom,
     "floor_u": Floor_U_Flat,
     "vent": VentBathroom,
     "roof_u": Roof_U_Insulated,
@@ -482,7 +512,7 @@ def finished_args(list_of_args):
                 args_finished['roof_u'] = Roof_U_Tim_Nels
         if 'windows_u' in args_finished.keys():
             if args_finished['windows_u'] > Windows_U_Insulated:
-                args_finished['roof_u'] = Windows_U_Insulated
+                args_finished['windows_u'] = Windows_U_Insulated
         if 'chimney' in args_finished.keys():
             args_finished['chimney'] = 0
         if args_finished['floor_u'] > Floor_U_Insulated:
@@ -495,43 +525,49 @@ def finished_args(list_of_args):
         finished_args_list += [args_finished]
     return finished_args_list
 
+def insulate_room(this_room):
+    try:
+        if this_room.roof_u > Roof_U_Tim_Nels:
+            this_room.roof_u = Roof_U_Tim_Nels
+    except:
+        pass
+    try:
+        if this_room.windows_u > Windows_U_Insulated:
+            this_room.windows_u = Windows_U_Insulated
+    except:
+        pass
+    try:
+        this_room.chimney = 0
+    except:
+        pass
+    try:
+        if this_room.floor_u > Floor_U_Insulated:
+            this_room.floor_u = Floor_U_Insulated
+    except:
+        pass
+    if this_room.wall1['U'] > Wall_U_Insulated_1:
+        this_room.wall1['U'] = Wall_U_Insulated_1
+    if this_room.wall2['U'] > Wall_U_Insulated_1:
+        this_room.wall2['U'] = Wall_U_Insulated_1
+    this_room.ach = ACH_DraughtProof
+    return this_room
 
-Dan_Finished = room(**DanArgs)
-Jen_Finished = room(**JenArgs)
-Bryony_Finished = room(**BryonyArgs)
-Sophie_Finished = room(**SophieArgs)
-SarahL_Finished = room(**SarahLoydArgs)
-Tim_Finished = room(**TimArgs)
-Nels_Finished = room(**NelsArgs)
-DSK_Finished = room(**DSKArgs)
-USK_Finished = room(**USKArgs)
-LivingRoom_Finished = room(**LivingRoomArgs)
-DSHall_Finished = room(**DSHallArgs)
-USHAll_Finished = room(**USHallArgs)
-DSB_Finished = room(**DSBArgs)
-LandingToilet_Finished = room(**LandingToiletArgs)
-DSHallLobby_Finished = room(**DSHallLobbyArgs)
-
-house_args_list = [DanArgs, JenArgs, BryonyArgs, SophieArgs, SarahLoydArgs, TimArgs, NelsArgs, DSKArgs, USKArgs, LivingRoomArgs, DSHallArgs, USHallArgs, DSBArgs, LandingToiletArgs, DSHallLobbyArgs]
-HouseHeat = sum([h.total_heat() for h in HouseList])
-
-Finished_House_Args = finished_args(house_args_list)
-Finished_House_List = [room(**a) for a in Finished_House_Args]
-HouseHeatFinished = sum([h.total_heat() for h in Finished_House_List])
+def Insulate_roomlist(roomlist):
+    newlist = [copy.deepcopy(r) for r in roomlist]
+    newlist = [insulate_room(r) for r in newlist]
+    return newlist
+    
 
 
+FlatMainRoom = room(**FlatMainRoomArgs)
+FlatBthrm = room(**FlatBthrmArgs)
+FlatSmlBdrm = room(**FlatSmlBdrmArgs)
+FlatLRGBdrm = room(**FlatLrgBdrmArgs)
 
-# FlatMainRoom = room(**FlatMainRoomArgs)
-# FlatBthrm = room(**FlatBthrmArgs)
-# FlatSmlBdrm = room(**FlatSmlBdrmArgs)
-# FlatLRGBdrm = room(**FlatLrgBdrmArgs)
+
+FlatList = [FlatLRGBdrm, FlatBthrm, FlatMainRoom, FlatSmlBdrm]
 
 
-# FlatList = [FlatLRGBdrm, FlatBthrm, FlatMainRoom, FlatSmlBdrm]
-
-# TotalList = FlatList + HouseList
-
-# FlatHeat = heat_for_roomlist(FlatList)
 
 Desired_Temp = 18
 Threshold_Temp = 18
