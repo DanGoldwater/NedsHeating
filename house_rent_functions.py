@@ -1,8 +1,9 @@
 #%%
+from ast import Call
 from dataclasses import dataclass
 import math
 from re import L
-from typing import List
+from typing import List, Callable  
 
 import pandas
 
@@ -17,12 +18,12 @@ class Housemate(object):
     def __post_init__(self):
         self.disposable_income = self.get_disposable_income()
 
-def get_disposable_income(self):
-        state_threshold = 12570
-        if self.income < state_threshold:
-            return state_threshold
-        else:
-            return state_threshold + 0.8 * (self.income - state_threshold)
+    def get_disposable_income(self):
+            state_threshold = 12570
+            if self.income < state_threshold:
+                return state_threshold
+            else:
+                return state_threshold + 0.8 * (self.income - state_threshold)
         
 H1 = Housemate(income= 32000, fixed_costs= 0, savings= 20000, name= 'Drew')
 H2 = Housemate(income= 46000, fixed_costs= 0, savings= 30000, name= 'Sacha')
@@ -34,8 +35,11 @@ H7 = Housemate(income= 14000, fixed_costs= 0, savings= 0, name= 'Leblanc')
 H8 = Housemate(income= 27000, fixed_costs= 0, savings= 10000, name= 'Andy')
 H9 = Housemate(income= 30000, fixed_costs= 0, savings= 0, name= 'Blaine')
 H10 = Housemate(income= 0, fixed_costs= 0, savings= 0, name= 'Tyla')
-H_Bezos = Housemate(income= 100000, fixed_costs= 0, savings= 0)
-H_Asisi = Housemate(income= 0, fixed_costs= 0, savings= 0)
+
+list_of_housies = [H10, H9, H8, H7, H6, H5, H4, H3, H2, H1,] 
+
+# H_Bezos = Housemate(income= 100000, fixed_costs= 0, savings= 0)
+# H_Asisi = Housemate(income= 0, fixed_costs= 0, savings= 0)
 
 @dataclass
 class Scenario(object):
@@ -44,20 +48,23 @@ class Scenario(object):
     cap_ratio: float
     income_threshold: int
     savings_threshold: int
+    a: float
+    b: float
+    c: float
     
-    def total_rent(self, list_of_housemates: List[Housemate], rent_formula: function):
+    def total_rent(self, list_of_housemates: List[Housemate], rent_formula: Callable):
         rent = 0
         for h in list_of_housemates:
             rent += rent_formula(scenario=self, housemate=h) 
         return rent
 
-    def total_bills(self, list_of_housemates: List[Housemate], bills_formula: function):
+    def total_bills(self, list_of_housemates: List[Housemate], bills_formula: Callable):
         bills = 0
         for h in list_of_housemates:
             bills += bills_formula(scenario=self, housemate=h) 
         return bills
     
-    def total_income(self, list_of_housemates: List[Housemate], bills_formula: function, rent_formula: function)
+    def total_income(self, list_of_housemates: List[Housemate], bills_formula: Callable, rent_formula: Callable):
         rent = self.total_rent(list_of_housemates=list_of_housemates, rent_formula=rent_formula)
         bills = self.total_bills(list_of_housemates=list_of_housemates, bills_formula=bills_formula)
         return rent + bills
