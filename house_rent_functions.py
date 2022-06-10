@@ -1,10 +1,7 @@
 #%%
-from ast import Call
 from dataclasses import dataclass
 import math
-from re import L
 from typing import List, Callable  
-
 import pandas
 
 
@@ -36,7 +33,7 @@ H8 = Housemate(income= 27000, fixed_costs= 0, savings= 10000, name= 'Andy')
 H9 = Housemate(income= 30000, fixed_costs= 0, savings= 0, name= 'Blaine')
 H10 = Housemate(income= 0, fixed_costs= 0, savings= 0, name= 'Tyla')
 
-list_of_housies = [H10, H9, H8, H7, H6, H5, H4, H3, H2, H1,] 
+Housies_Current_Ten = [H10, H9, H8, H7, H6, H5, H4, H3, H2, H1,] 
 
 # H_Bezos = Housemate(income= 100000, fixed_costs= 0, savings= 0)
 # H_Asisi = Housemate(income= 0, fixed_costs= 0, savings= 0)
@@ -51,22 +48,30 @@ class Scenario(object):
     a: float
     b: float
     c: float
+    list_of_housemates: List[Housemate]
+    rent_formula: Callable
+    bills_formula: Callable
+
+    # def __init__(self) -> None:
+    #     self.rent_formula = self.rent_formula_form(self)
+    #     self.bills_formula = self.bills_formula_form(self)
+    #     pass
     
-    def total_rent(self, list_of_housemates: List[Housemate], rent_formula: Callable):
+    def total_rent(self):
         rent = 0
-        for h in list_of_housemates:
-            rent += rent_formula(scenario=self, housemate=h) 
+        for h in self.list_of_housemates:
+            rent += self.rent_formula(scenario=self, housemate=h) 
         return rent
 
-    def total_bills(self, list_of_housemates: List[Housemate], bills_formula: Callable):
+    def total_bills(self):
         bills = 0
-        for h in list_of_housemates:
-            bills += bills_formula(scenario=self, housemate=h) 
+        for h in self.list_of_housemates:
+            bills += self.bills_formula(scenario=self, housemate=h) 
         return bills
     
-    def total_income(self, list_of_housemates: List[Housemate], bills_formula: Callable, rent_formula: Callable):
-        rent = self.total_rent(list_of_housemates=list_of_housemates, rent_formula=rent_formula)
-        bills = self.total_bills(list_of_housemates=list_of_housemates, bills_formula=bills_formula)
+    def total_income(self):
+        rent = self.total_rent()
+        bills = self.total_bills()
         return rent + bills
     
     

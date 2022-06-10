@@ -1,5 +1,6 @@
 #%%
 
+from dataclasses import dataclass
 import math
 from matplotlib.pyplot import get_current_fig_manager
 from numpy import arange
@@ -56,31 +57,31 @@ HouseMateList = [
 ]
 HouseMateListWithBryony = HouseMateList + [H10]
 
-
+@dataclass
 class scenario(object):
     def __init__(
         self,
-        base_rent,
-        income_threshold,
-        savings_threshold,
-        bills,
-        cap_ratio,
-        rent_rule,
-        bills_rule,
-        a,
-        b,
-        c
+        base_rent: int,
+        income_threshold: int,
+        savings_threshold: int,
+        bills: int,
+        cap_ratio: function,
+        rent_rule: function,
+        bills_rule: function,
+        a: int,
+        b: int,
+        c: int
     ):
-        self.base_rent = base_rent
-        self.income_threshold = income_threshold
-        self.savings_threshold = savings_threshold
-        self.bills = bills
-        self.cap_ratio = cap_ratio
-        self.rent_rule = rent_rule
-        self.bills_rule = bills_rule
-        self.a = a
-        self.b = b
-        self.c = c
+        # self.base_rent = base_rent
+        # self.income_threshold = income_threshold
+        # self.savings_threshold = savings_threshold
+        # self.bills = bills
+        # self.cap_ratio = cap_ratio
+        # self.rent_rule = rent_rule
+        # self.bills_rule = bills_rule
+        # self.a = a
+        # self.b = b
+        # self.c = c
 
     def get_rent(self, housemate):
         return self.rent_rule(self, housemate)
@@ -95,17 +96,6 @@ class scenario(object):
 def rent_formula_current(scenario, house_mate):
     return rent_formula_current_form(scenario.cap_ratio, scenario.income_threshold, scenario.base_rent, house_mate.savings, house_mate.disposable_income, scenario.savings_threshold)
 
-    # rent = scenario.base_rent
-    # if (house_mate.disposable_income) > scenario.income_threshold:
-    #     rent += (house_mate.disposable_income - scenario.income_threshold) / 3000
-    # if (house_mate.savings) > scenario.savings_threshold:
-    #     rent += (house_mate.savings - scenario.income_threshold) / 3000
-    # if rent > scenario_current.cap_ratio * scenario_current.base_rent:
-    #     rent = scenario_current.cap_ratio * scenario_current.base_rent
-    # rent = math.ceil(rent)
-
-    # rent = rent * 52.2 / 12
-    # return rent
 
 def rent_formula_current_form(cap_ratio, income_threshold, base_rent, savings, disposable_income, savings_threshold):
     rent = base_rent
@@ -133,9 +123,7 @@ def bills_formula_new(scenatio, house_mate):
 
 
 def rent_formula_new(scenario, house_mate):
-    # if house_mate.disposable_income < scenario.income_threshold:
-    #     rent = scenario.base_rent
-    # else:
+  
     a = scenario.a
     b = scenario.b
     c = scenario.c
