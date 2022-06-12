@@ -2,19 +2,35 @@
 from house_rent_functions import *
 
 
-Scenario_Current_9 = Scenario(**{
-        "base_rent": 46,
-        "income_threshold": 14200,
-        "savings_threshold": 14200,
-        "bills": 70,
-        "cap_ratio": 1.5,
-        "rent_formula": rent_current,
-        "bills_formula": bills_current,
-        "list_of_housemates": Housies_Current_Ten,
-        "a": 0,
-        "b": 0,
-        "c": 0
-    }
-)
+Arguments_Current_9 = {
+    "base_rent": 46,
+    "income_threshold": 14200,
+    "savings_threshold": 14200,
+    "bills_to_pay": 70 * 9,
+    "cap_ratio": 1.5,
+    "rent_formula": rent_current,
+    "bills_formula": bills_current,
+    "list_of_housemates": Housemate_List_Current_9,
+    'rent_params':{
+      'alpha': .9,
+      'beta': .2
+    },
+    "a": 0,
+    "b": 0,
+    "c": 0,
+    'bills_params': {
+        'alpha': .5,
+        'beta': .1}
+}
 
-print(Scenario_Current_9.total_rent())
+
+Arguments_Current_10 = Arguments_Current_9.copy()
+Arguments_Current_10['list_of_housemates'] = Housemate_List_Current_10
+Arguments_Proposed_9 = Arguments_Current_9.copy()
+Arguments_Proposed_9['base_rent'] = 47
+Arguments_Proposed_10 = Arguments_Current_9.copy()
+Scenario_Current_9 = Scenario(**Arguments_Current_9)
+Scenario_Current_10 = Scenario(**Arguments_Current_10)
+Scenario_Proposed_9 = Scenario(**Arguments_Proposed_9)
+Scenario_Proposed_10 = Scenario(**Arguments_Proposed_10)
+

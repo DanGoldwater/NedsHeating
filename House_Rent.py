@@ -43,19 +43,19 @@ H10 = house_mate(**{"income": 0, "fixed_costs": 0, "savings": 0})
 H_Bezos = house_mate(**{"income": 100000, "fixed_costs": 0, "savings": 0})
 H_Asisi = house_mate(**{"income": 0, "fixed_costs": 0, "savings": 0})
 
-HouseMateList = [
-    H1,
-    H2,
-    H3,
-    H4,
-    H5,
-    H6,
-    H7,
-    H8,
-    H9
-    #  , H10
-]
-HouseMateListWithBryony = HouseMateList + [H10]
+# House_Mate_List_9 = [
+#     H1,
+#     H2,
+#     H3,
+#     H4,
+#     H5,
+#     H6,
+#     H7,
+#     H8,
+#     H9
+#     #  , H10
+# ]
+# House_Mate_List_10 = House_Mate_List_9 + [H10]
 
 @dataclass
 class scenario(object):
@@ -214,8 +214,8 @@ income_range = arange(10000, 50000, 10)
 def make_scenario_plot_data(scenario):
     return [rent_formula_form(xi,scenario.income_threshold,  scenario.base_rent, scenario.a, scenario.b, scenario.c, scenario.cap_ratio) for xi in income_range]
 
-house_income_current = get_house_income(HouseMateList, scenario_current)
-rent_list_current = [scenario_current.get_rent(h) for h in HouseMateList]
+house_income_current = get_house_income(House_Mate_List_9, scenario_current)
+rent_list_current = [scenario_current.get_rent(h) for h in House_Mate_List_9]
 
 
 
