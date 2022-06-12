@@ -12,8 +12,9 @@ Arguments_Current_9 = {
     "bills_formula": bills_current,
     "list_of_housemates": Housemate_List_Current_9,
     'rent_params':{
-      'alpha': .9,
-      'beta': .2
+      'alpha': .8,
+      'gamma': .4,
+      'beta': .1
     },
     "a": 0,
     "b": 0,
@@ -27,7 +28,7 @@ Arguments_Current_9 = {
 Arguments_Current_10 = Arguments_Current_9.copy()
 Arguments_Current_10['list_of_housemates'] = Housemate_List_Current_10
 Arguments_Proposed_9 = Arguments_Current_9.copy()
-Arguments_Proposed_9['base_rent'] = 47
+# Arguments_Proposed_9['base_rent'] = 47
 Arguments_Proposed_10 = Arguments_Current_9.copy()
 Scenario_Current_9 = Scenario(**Arguments_Current_9)
 Scenario_Current_10 = Scenario(**Arguments_Current_10)

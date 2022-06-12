@@ -78,7 +78,7 @@ class Scenario(object):
         return round(prop * 52.2 / 12)
 
     def get_rent_nonlinear_for_housemate(self, housemate: Housemate):
-        extra = self.rent_params['alpha'] *  math.exp(self.rent_params['beta'] * housemate.excess)
+        extra = self.rent_params['alpha'] *  math.exp(self.rent_params['beta'] * housemate.excess) + self.rent_params['gamma'] * housemate.excess
         if extra > self.base_rent / 2:
             extra = self.base_rent / 2
         rent =  (self.base_rent +  extra) * 52.2 / 12
