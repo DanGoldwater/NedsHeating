@@ -6,7 +6,7 @@ Arguments_Current_9 = {
     "base_rent": 47,
     "income_threshold": 14200,
     "savings_threshold": 14200,
-    "bills_to_pay": 80 * 9,
+    "bills_to_pay": 110 * 9,
     "cap_ratio": 1.5,
     "rent_formula": rent_current,
     "bills_formula": bills_current,
@@ -38,7 +38,7 @@ Arguments_Proposed_9.update(
     },
     "bills_params":{
     "alpha": .6,
-    "beta": .11}})
+    "beta": .1}})
 # Arguments_Proposed_9['base_rent'] = 47
 Arguments_Proposed_10 = Arguments_Proposed_9.copy()
 Arguments_Current_10['list_of_housemates'] = Housemate_List_Current_10
