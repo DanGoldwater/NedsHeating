@@ -1,6 +1,9 @@
 #%%
 from house_rent_functions import *
 
+Housemates_2022 = {
+  {'name': 'Pat', 'adjusted_income': 756, 'savings': 0}
+}
 
 Arguments_Current_9 = {
     "base_rent": 47,
@@ -24,6 +27,20 @@ Arguments_Current_9 = {
         'beta': .1}
 }
 
+def get_projected_bills_to_pay():
+  total = ( 
+      1176.21 * 12 #Electricity and gas, house\
+    + 163.44 * 12 # Electricity and gas, flat and factory\
+    + 72.43 * 12 # Water, monthly
+    + 44.73 * 12  # Internet for flat
+    + 73 * 12   #  internet, house\
+    + 150 * 4   #  Household cleaning to veggies\
+    + 159  # TV license\
+  ) * 1.15 # Bills 'profit', so that we can build a buffer level
+  return total / 12
+    
+  
+
 
 Arguments_Current_10 = Arguments_Current_9.copy()
 Arguments_Current_10['list_of_housemates'] = Housemate_List_Current_10
@@ -31,6 +48,7 @@ Arguments_Proposed_9 = Arguments_Current_9.copy()
 Arguments_Proposed_9.update(
   {'cap_ratio':
     1.75,
+    'bills_to_pay': get_projected_bills_to_pay(),
     "rent_params":
     {'alpha':.8,
      'gamma':.5,
