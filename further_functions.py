@@ -1,9 +1,7 @@
 #%%
 from house_rent_functions import *
 
-Housemates_2022 = {
-  {'name': 'Pat', 'adjusted_income': 756, 'savings': 0}
-}
+Housemates_2022 = [{'name': 'Pat', 'adjusted_income': 756, 'savings': 0}]
 
 Arguments_Current_9 = {
     "base_rent": 47,
