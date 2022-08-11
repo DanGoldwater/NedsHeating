@@ -2,6 +2,8 @@ from email.mime import base
 import math
 import pandas as pd
 import streamlit as st
+import altair as alt
+import plotly
 
 import house_rent_functions
 import further_functions
@@ -25,12 +27,12 @@ with parameters_area:
     rent_col.subheader('Parameters for the rent')
     RENT_ALPHA = rent_col.slider('alpha', 0.0, 1.0, step=slide_step)
     RENT_BETA = rent_col.slider('beta', 0.0, 1.0)
-    RENT_GAMMA = rent_col.slider('gamma', 0.0, 1.0, step=slide_step)
+    RENT_GAMMA = rent_col.slider('gamma', 0.0, 100.0, step=slide_step, value=25.0)
     MAX_RATIO = rent_col.slider('maximum ratio', 1.0, 2.0, step=slide_step)
 
     bills_col.subheader('Parameters for the bills')
     BILLS_ALPHA = bills_col.slider('How progressive the scaling is', 0.0, 2.0, step=slide_step)
-    BILLS_BETA = bills_col.slider('How big the scaling is', 0.0, 1.0, step=slide_step)
+    BILLS_BETA = bills_col.slider('How big the scaling is', 0.0, 5.0, step=slide_step)
     
     RENT_OUTGOING = st.number_input(label='Rent outgoing per month', value=2000)
     BILLS_OUTGOING = st.number_input(label='Bills outgoing per month', value=1593)
@@ -38,12 +40,12 @@ with parameters_area:
     st.write(f'Bills gathered per month = {BILLS_OUTGOING * (1 + BUFFER_OUTGOING):.2f}, for a profit of {BILLS_OUTGOING * BUFFER_OUTGOING:.2f}')
     
 def get_excess(savings, adjusted_income):
-    savings_excess = max(savings - housemates_and_settings.savings_threshold, 0)
-    income_excess = max(adjusted_income  - housemates_and_settings.income_threshold, 0)
+    savings_excess = max(savings - housemates_and_settings.savings_threshold, 0) / 5
+    income_excess = max((adjusted_income )  - housemates_and_settings.income_threshold, 0)
     return max((savings_excess + income_excess) / 1000, 0)
 
 def get_rent(excess): 
-    extra = RENT_ALPHA * math.exp(RENT_BETA * excess) + RENT_GAMMA * excess
+    extra = RENT_ALPHA * math.exp(RENT_BETA * excess) + RENT_GAMMA * excess 
     if extra > base_rent * (MAX_RATIO - 1):
         extra = base_rent * (MAX_RATIO - 1)
     rent = base_rent + extra
@@ -70,6 +72,7 @@ with due_area:
     RENT_PROFIT = max(0, (df['rent'].sum() - RENT_OUTGOING) * 12)
     
     st.dataframe(df)
+                #  [['name', 'bills','rent','outgoings']])
     # df.head()
     
                                    
@@ -83,9 +86,56 @@ with st.sidebar:
     st.metric(label='Rent profit per year', value=RENT_PROFIT)
     st.metric(label='Lowest outgoings per month', value=round(df['outgoings'].min()))
     st.metric(label='Highest Outgoings per month', value=round(df['outgoings'].max()))
-    st.metric(label='Ratio from max to min', value=round(df['outgoings'].max()/df['outgoings'].min(), 3) )
+    st.subheader('Ratios; maximum to minimum')
+    st.metric(label='Total', value=round(df['outgoings'].max()/df['outgoings'].min(), 2) )
+    st.metric(label='Rent', value=round(df['rent'].max()/df['rent'].min(), 3) )
+    st.metric(label='Bills', value=round(df['bills'].max()/df['bills'].min(), 3) )
+
     
+
+
+chart = alt.Chart(df[['name','rent','bills']]).mark_bar().encode(
+    x='name',
+    y='rent'
+)
+
+chart2 = plotly.graph_objs.Figure(
+    data=[
+     plotly.graph_objs.Bar(
+         name='rent',
+         x=df['name'],
+         y=df['rent'],
+         offsetgroup=0
+     ),
+     plotly.graph_objs.Bar(
+         name='bills',
+         x=df['name'],
+         y=df['bills'],
+         offsetgroup=1
+     )
+     ],
     
+)
+
+# chart = alt.Chart(df, title='Outgoings').mark_bar(
+#     # opacity=0.3,
+#     ).encode(
+#     column = alt.Column('variable'),
+#     x = alt.X('name:O'),
+#     y = alt.Y('rent:Q'),
+    # color = alt.Color('variable:N')
+# )
+    # .properties(width= 400, height = 400)
+
+st.plotly_chart(chart2, use_container_width=True)
+
+
+# st.altair_chart(chart, use_container_width=True)
+# st.bar_chart(
+    # data=df.set_index('name')[['rent', 'bills']]
+    # x='name',
+    # y=('rent', 'bills')
+    # )
     
     # st.write(st.session_state.housemates)
 with st.expander('add housemate'):
